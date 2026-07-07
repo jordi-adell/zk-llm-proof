@@ -4,7 +4,8 @@ PIP        := $(VENV)/bin/pip
 ZKLLMS     := $(VENV)/bin/zkllms
 
 MODEL      ?= model.onnx
-MODEL_NAME ?= Qwen/Qwen2.5-0.5B
+MODEL_NAME ?= Qwen/Qwen3-0.6B
+MODELS_DIR ?= models
 KEYS       ?= keys
 INPUT      ?= hello world
 PROOF      ?= proof.json
@@ -39,7 +40,7 @@ help:
 	@echo "  make clean        Remove generated artifacts (onnx, keys, proof)"
 	@echo "  make distclean    Also remove the virtualenv"
 	@echo ""
-	@echo "Variables: MODEL_NAME=$(MODEL_NAME) MODEL=$(MODEL) KEYS=$(KEYS) SEQ_LEN=$(SEQ_LEN) NUM_LAYERS=$(NUM_LAYERS) INPUT='$(INPUT)'"
+	@echo "Variables: MODEL_NAME=$(MODEL_NAME) MODELS_DIR=$(MODELS_DIR) MODEL=$(MODEL) KEYS=$(KEYS) SEQ_LEN=$(SEQ_LEN) NUM_LAYERS=$(NUM_LAYERS) INPUT='$(INPUT)'"
 
 $(PY):
 	python3 -m venv $(VENV) || python3 -m virtualenv $(VENV)
@@ -63,13 +64,13 @@ coverage:
 	$(PY) -m pytest -q -p no:warnings --cov=zkllms --cov-report=term-missing
 
 export:
-	$(ZKLLMS) export --output $(MODEL) --model-name $(MODEL_NAME) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
+	$(ZKLLMS) export --output $(MODEL) --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
 
 setup:
 	$(ZKLLMS) setup --model $(MODEL) --keys-dir $(KEYS)
 
 prove:
-	$(ZKLLMS) prove --model $(MODEL) --keys-dir $(KEYS) --input "$(INPUT)" --output $(PROOF) --model-name $(MODEL_NAME) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
+	$(ZKLLMS) prove --model $(MODEL) --keys-dir $(KEYS) --input "$(INPUT)" --output $(PROOF) --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
 
 verify:
 	$(ZKLLMS) verify --keys-dir $(KEYS) --proof $(PROOF)

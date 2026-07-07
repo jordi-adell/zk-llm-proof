@@ -66,16 +66,18 @@ ezkl visibility configuration realizes the privacy goal:
 ```bash
 pip install -e ".[dev]"
 
-# 1. Export the first N layers of a model to ONNX (defaults to Qwen/Qwen2.5-0.5B)
-zkllms export --output model.onnx --model-name Qwen/Qwen2.5-0.5B --seq-len 4 --num-layers 1
+# 1. Export the first N layers of a model to ONNX (defaults to Qwen/Qwen2.5-0.5B).
+#    The model is cached in ./models on first download.
+zkllms export --output model.onnx --model-name Qwen/Qwen2.5-0.5B --models-dir models/ \
+  --seq-len 4 --num-layers 1
 
 # 2. Compile the model into a ZK circuit and generate proving/verification keys
 zkllms setup --model model.onnx --keys-dir keys/
 
-# 3. Run inference and generate a ZK proof (weights + input are encrypted in-process)
-#    Pass the SAME --model-name used for export.
+# 3. Run inference and generate a ZK proof (weights + input are encrypted in-process).
+#    Pass the SAME --model-name and --models-dir used for export (reuses the cache).
 zkllms prove --model model.onnx --keys-dir keys/ --model-name Qwen/Qwen2.5-0.5B \
-  --input "Hello world" --output proof.json
+  --models-dir models/ --input "Hello world" --output proof.json
 
 # 4. Verify the proof
 zkllms verify --keys-dir keys/ --proof proof.json
@@ -91,6 +93,13 @@ from the model's `config`, so no per-model code changes are needed. Architecture
 this family — encoder models (BERT), encoder-decoder models (T5), and legacy
 absolute-position models (GPT-2) — are rejected with a clear error, because the
 hidden-state block approach relies on the rotary decoder-layer structure.
+
+### Model cache
+
+`--models-dir` (default `models/`) is used as the HuggingFace download cache. Both
+`export` and `prove` load the model, so caching means a model is downloaded once and
+reused on every subsequent command — pass the same `--models-dir` to both. The directory
+is created on first use and is git-ignored.
 
 ## Project Layout
 

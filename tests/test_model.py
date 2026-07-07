@@ -58,3 +58,17 @@ def test_load_model_supports_a_non_qwen_decoder_llm(tmp_path):
 def test_load_model_rejects_unsupported_architecture():
     with pytest.raises(ValueError, match="unsupported architecture"):
         model.load_model(model_name="hf-internal-testing/tiny-random-gpt2", num_layers=1)
+
+
+@pytest.mark.slow
+def test_load_model_caches_into_the_given_directory(tmp_path):
+    cache = tmp_path / "models"
+
+    model.load_model(
+        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM",
+        num_layers=1,
+        cache_dir=str(cache),
+    )
+
+    assert cache.exists()
+    assert any(cache.rglob("*.safetensors")) or any(cache.rglob("*.bin"))
