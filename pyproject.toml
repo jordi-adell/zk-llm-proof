@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zkllms"
+version = "0.1.0"
+description = "Zero-knowledge proof system for LLM inference on hardware accelerators"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "ezkl>=10.0.0",
+    "torch>=2.0",
+    "onnx>=1.14",
+    "transformers>=4.40",
+    "click>=8.0",
+    "cryptography>=41.0",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-mock", "pytest-cov"]
+
+[project.scripts]
+zkllms = "zkllms.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["zkllms"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: end-to-end tests requiring internet access and ezkl compute",
+]

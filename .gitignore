@@ -1,3 +1,24 @@
+# Project specific
+.venv/
+.idea/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+.remember/
+
+*.onnx
+*.onnx.calibration.json
+*.compiled
+*.srs
+*.key
+proof.json
+witness.json
+keys/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -216,3 +237,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
