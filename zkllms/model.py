@@ -34,15 +34,19 @@ def decode_logits_to_tokens(values: list[float], seq_len: int, vocab_size: int) 
     return tokens
 
 
-def load_model(model_name: str = DEFAULT_MODEL_NAME, num_layers: int = 1) -> ModelSlice:
+def load_model(
+    model_name: str = DEFAULT_MODEL_NAME,
+    num_layers: int = 1,
+    cache_dir: str | None = None,
+) -> ModelSlice:
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     full = AutoModelForCausalLM.from_pretrained(
-        model_name, dtype=torch.float32, attn_implementation="eager"
+        model_name, dtype=torch.float32, attn_implementation="eager", cache_dir=cache_dir
     )
     backbone = getattr(full, "model", None)
     if backbone is None or not hasattr(backbone, "layers") or not hasattr(backbone, "embed_tokens"):

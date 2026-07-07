@@ -18,6 +18,7 @@ dist/
 proof.json
 witness.json
 keys/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -32,10 +32,13 @@ def cli() -> None:
 @cli.command()
 @click.option("--output", type=click.Path(), default="model.onnx")
 @click.option("--model-name", default=model.DEFAULT_MODEL_NAME, show_default=True)
+@click.option("--models-dir", type=click.Path(), default="models", show_default=True)
 @click.option("--seq-len", default=4, show_default=True)
 @click.option("--num-layers", default=1, show_default=True)
-def export(output: str, model_name: str, seq_len: int, num_layers: int) -> None:
-    model_slice = model.load_model(model_name=model_name, num_layers=num_layers)
+def export(output: str, model_name: str, models_dir: str, seq_len: int, num_layers: int) -> None:
+    model_slice = model.load_model(
+        model_name=model_name, num_layers=num_layers, cache_dir=models_dir
+    )
     onnx_path = Path(output)
     model.export_to_onnx(model_slice, onnx_path, seq_len=seq_len)
     calibration = model.create_sample_input(model_slice, "hello world", seq_len=seq_len)
@@ -62,6 +65,7 @@ def setup(model_path: str, keys_dir: str) -> None:
 @click.option("--input", "text", required=True)
 @click.option("--output", "proof_out", type=click.Path(), default="proof.json")
 @click.option("--model-name", default=model.DEFAULT_MODEL_NAME, show_default=True)
+@click.option("--models-dir", type=click.Path(), default="models", show_default=True)
 @click.option("--seq-len", default=4, show_default=True)
 @click.option("--num-layers", default=1, show_default=True)
 @click.option("--passphrase", default=None)
@@ -72,6 +76,7 @@ def prove(
     text: str,
     proof_out: str,
     model_name: str,
+    models_dir: str,
     seq_len: int,
     num_layers: int,
     passphrase: str | None,
@@ -84,7 +89,9 @@ def prove(
     with tee_phase("decrypt", phases):
         crypto.decrypt_bytes(ciphertext, nonce, key)
 
-    model_slice = model.load_model(model_name=model_name, num_layers=num_layers)
+    model_slice = model.load_model(
+        model_name=model_name, num_layers=num_layers, cache_dir=models_dir
+    )
     sample = model.create_sample_input(model_slice, text, seq_len=seq_len)
     input_json = Path(keys_dir) / "input.json"
     input_json.write_text(json.dumps(sample))

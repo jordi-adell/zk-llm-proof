@@ -56,12 +56,14 @@ def test_export_passes_the_model_name_to_load_model(mocker, tmp_path):
             "--output", str(tmp_path / "model.onnx"),
             "--model-name", "meta-llama/Llama-3.2-1B",
             "--num-layers", "2",
+            "--models-dir", str(tmp_path / "models"),
         ],
     )
 
     assert result.exit_code == 0
     assert load.call_args.kwargs["model_name"] == "meta-llama/Llama-3.2-1B"
     assert load.call_args.kwargs["num_layers"] == 2
+    assert load.call_args.kwargs["cache_dir"] == str(tmp_path / "models")
 
 
 def test_prove_passes_the_model_name_to_load_model(mocker, tmp_path):
@@ -86,11 +88,13 @@ def test_prove_passes_the_model_name_to_load_model(mocker, tmp_path):
             "--output", str(tmp_path / "proof.json"),
             "--seq-len", "1",
             "--model-name", "mistralai/Mistral-7B-v0.1",
+            "--models-dir", str(tmp_path / "models"),
         ],
     )
 
     assert result.exit_code == 0, result.output
     assert load.call_args.kwargs["model_name"] == "mistralai/Mistral-7B-v0.1"
+    assert load.call_args.kwargs["cache_dir"] == str(tmp_path / "models")
 
 
 def test_setup_compiles_circuit_and_generates_keys(mocker, tmp_path):
