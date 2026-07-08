@@ -138,6 +138,11 @@ make run          # full pipeline: export -> setup -> prove -> verify
 Pipeline variables are overridable, e.g. `make run MODEL_NAME=meta-llama/Llama-3.2-1B
 SEQ_LEN=2 INPUT="the answer is"`.
 
+The exported ONNX is cached per model under `$(MODELS_DIR)/onnx/` (keyed by model name,
+`NUM_LAYERS`, and `SEQ_LEN`), so `make` regenerates it only when it is missing — switching
+`MODEL_NAME` uses a different cached file and re-exports once, while re-running the same
+model reuses the existing ONNX.
+
 Tests are split into two tiers via the `slow` marker (registered in `pyproject.toml`):
 
 - **Fast** (`pytest -m "not slow"`) — pure logic and mocked ezkl/model calls; no network,

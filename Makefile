@@ -3,7 +3,6 @@ PY         := $(VENV)/bin/python
 PIP        := $(VENV)/bin/pip
 ZKLLMS     := $(VENV)/bin/zkllms
 
-MODEL      ?= model.onnx
 MODEL_NAME ?= Qwen/Qwen3-0.6B
 MODELS_DIR ?= models
 KEYS       ?= keys
@@ -11,6 +10,8 @@ INPUT      ?= hello world
 PROOF      ?= proof.json
 SEQ_LEN    ?= 4
 NUM_LAYERS ?= 1
+
+ONNX       := $(MODELS_DIR)/onnx/$(subst /,__,$(MODEL_NAME))__L$(NUM_LAYERS)_S$(SEQ_LEN).onnx
 
 export HF_HUB_DISABLE_PROGRESS_BARS = 1
 
@@ -40,7 +41,8 @@ help:
 	@echo "  make clean        Remove generated artifacts (onnx, keys, proof)"
 	@echo "  make distclean    Also remove the virtualenv"
 	@echo ""
-	@echo "Variables: MODEL_NAME=$(MODEL_NAME) MODELS_DIR=$(MODELS_DIR) MODEL=$(MODEL) KEYS=$(KEYS) SEQ_LEN=$(SEQ_LEN) NUM_LAYERS=$(NUM_LAYERS) INPUT='$(INPUT)'"
+	@echo "Variables: MODEL_NAME=$(MODEL_NAME) MODELS_DIR=$(MODELS_DIR) KEYS=$(KEYS) SEQ_LEN=$(SEQ_LEN) NUM_LAYERS=$(NUM_LAYERS) INPUT='$(INPUT)'"
+	@echo "Cached ONNX: $(ONNX)"
 
 $(PY):
 	python3 -m venv $(VENV) || python3 -m virtualenv $(VENV)
@@ -63,14 +65,18 @@ test-all:
 coverage:
 	$(PY) -m pytest -q -p no:warnings --cov=zkllms --cov-report=term-missing
 
-export:
-	$(ZKLLMS) export --output $(MODEL) --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
+$(ONNX):
+	mkdir -p $(dir $@)
+	$(ZKLLMS) export --output $@ --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
 
-setup:
-	$(ZKLLMS) setup --model $(MODEL) --keys-dir $(KEYS)
+export: $(ONNX)
+	@echo "ONNX ready: $(ONNX)"
 
-prove:
-	$(ZKLLMS) prove --model $(MODEL) --keys-dir $(KEYS) --input "$(INPUT)" --output $(PROOF) --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
+setup: $(ONNX)
+	$(ZKLLMS) setup --model $(ONNX) --keys-dir $(KEYS)
+
+prove: $(ONNX)
+	$(ZKLLMS) prove --model $(ONNX) --keys-dir $(KEYS) --input "$(INPUT)" --output $(PROOF) --model-name $(MODEL_NAME) --models-dir $(MODELS_DIR) --seq-len $(SEQ_LEN) --num-layers $(NUM_LAYERS)
 
 verify:
 	$(ZKLLMS) verify --keys-dir $(KEYS) --proof $(PROOF)
@@ -78,7 +84,7 @@ verify:
 run: export setup prove verify
 
 clean:
-	rm -rf $(KEYS) $(MODEL) $(MODEL).calibration.json $(PROOF)
+	rm -rf $(KEYS) $(PROOF)
 
 distclean: clean
 	rm -rf $(VENV) *.egg-info .pytest_cache .coverage
